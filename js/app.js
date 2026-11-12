@@ -260,12 +260,26 @@ function loadGalleryDates() {
 }
 
 function loadAllDateGroups() {
-    fetch(`api.php?action=get_images&view=${currentState.currentFilter === 'favorites' ? 'favorites' : 'all'}`)
+    const isFavorites = currentState.currentFilter === 'favorites';
+    // Default view shows the last 30 days; favorites show everything
+    const days = isFavorites ? 0 : 30;
+
+    fetch(`api.php?action=get_all_images&view=${isFavorites ? 'favorites' : 'all'}&days=${days}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Group the single response by date, newest first
+                const byDate = {};
+                data.images.forEach(img => {
+                    (byDate[img.folder_date] = byDate[img.folder_date] || []).push(img);
+                });
+                currentState.imagesByDate = byDate;
+
+                const dates = Object.keys(byDate).sort().reverse()
+                    .map(folder_date => ({ folder_date, count: byDate[folder_date].length }));
+
                 // Filter dates based on selected filter
-                currentState.allDates = filterDatesByRange(data.dates, currentState.currentFilter);
+                currentState.allDates = filterDatesByRange(dates, currentState.currentFilter);
                 renderDateGroups();
             }
         })
@@ -342,15 +356,11 @@ function renderDateGroups() {
     // Flatten all images into one array for lightbox indexing
     currentState.allImages = [];
 
-    // Fetch all images for all dates
-    const fetchPromises = currentState.allDates.map(dateInfo => {
-        return fetch(`api.php?action=get_images_by_date&date=${dateInfo.folder_date}&view=${currentState.currentFilter === 'favorites' ? 'favorites' : 'all'}`)
-            .then(response => response.json())
-            .then(data => ({
-                dateInfo: dateInfo,
-                images: data.success ? data.images : []
-            }));
-    });
+    // Images were already loaded in one request by loadAllDateGroups()
+    const fetchPromises = currentState.allDates.map(dateInfo => Promise.resolve({
+        dateInfo: dateInfo,
+        images: (currentState.imagesByDate && currentState.imagesByDate[dateInfo.folder_date]) || []
+    }));
 
     // Wait for ALL fetches to complete, then render in correct order
     Promise.all(fetchPromises)

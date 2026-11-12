@@ -26,6 +26,9 @@ if ($action === 'get_images') {
 elseif ($action === 'get_images_by_date') {
     handle_get_images_by_date();
 }
+elseif ($action === 'get_all_images') {
+    handle_get_all_images();
+}
 elseif ($action === 'get_calendar_data') {
     handle_get_calendar_data();
 }
@@ -176,6 +179,50 @@ function handle_get_images_by_date() {
         'images' => $images,
         'count' => count($images),
         'view' => $view
+    ]);
+}
+
+/**
+ * Public: All photos in a single request, newest first.
+ * Defaults to the last 30 days so the page stays fast as the archive grows.
+ * Pass days=0 for everything (the favorites view uses this).
+ */
+function handle_get_all_images() {
+    global $pdo;
+
+    $view = $_GET['view'] ?? 'all';
+    $days = isset($_GET['days']) ? max(0, (int)$_GET['days']) : 30;
+
+    $where = 'WHERE is_archived = 0';
+    $params = [];
+
+    if ($view === 'favorites') {
+        $where .= ' AND is_favorite = 1';
+    }
+    if ($days > 0) {
+        $where .= ' AND folder_date >= ?';
+        $params[] = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, filename, folder_date, captured_date, label, is_favorite
+        FROM cam_images
+        $where
+        ORDER BY folder_date DESC, captured_date DESC
+    ");
+    $stmt->execute($params);
+    $images = $stmt->fetchAll();
+
+    foreach ($images as &$img) {
+        $img['thumbnail'] = get_thumbnail_path($img['filename'], $img['folder_date']);
+    }
+    unset($img);
+
+    echo json_encode([
+        'success' => true,
+        'images' => $images,
+        'view' => $view,
+        'days' => $days
     ]);
 }
 
