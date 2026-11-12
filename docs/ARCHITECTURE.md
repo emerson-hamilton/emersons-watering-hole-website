@@ -218,11 +218,13 @@ Each entry says what was decided, why, and what it costs.
 
 **Cost.** Anyone adding a query or an output line has to follow the pattern.
 
-### 10. Admin password stored as a hash
+### 10. Admin password stored as a bcrypt hash
 
-**Decision.** The admin password is stored as a hash in `admin_settings` and checked with `password_verify()`.
+**Decision.** The admin password is stored as a bcrypt hash in `admin_settings` and checked with `password_verify()`. The hash uses cost factor 12 (the stored value starts with `$2y$12$`), which was set when the hash was created outside the repo.
 
-**Note.** The code doesn't create hashes, so the hashing cost factor is not recorded here. The hash was created outside the repo.
+**Why.** Cost 12 makes offline guessing of a stolen hash slow. Login still takes well under a second on the server.
+
+**Cost.** Each login does a slow hash check. The code doesn't create hashes, so changing the password means generating a new hash with cost 12 and updating `admin_settings` directly.
 
 ### 11. The gallery loads one request, with a 30-day default filter
 
@@ -250,5 +252,4 @@ Each entry says what was decided, why, and what it costs.
 
 ## Open items
 
-- The hashing cost factor for the admin password should be recorded.
 - A way to report sync health to the admin page would avoid checking the log by hand.
