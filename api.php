@@ -6,6 +6,7 @@
  */
 
 require_once 'config.php';
+require_once __DIR__ . '/includes/sync.php';
 
 header('Content-Type: application/json');
 
@@ -107,8 +108,6 @@ else {
 function handle_get_images() {
     global $pdo, $uploads_dir;
     
-    // Sync new images from filesystem (3 days back)
-    sync_images_from_filesystem($pdo, $uploads_dir, 3);
     
     $view = $_GET['view'] ?? 'all'; // 'all' or 'favorites'
     
