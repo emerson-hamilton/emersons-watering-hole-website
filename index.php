@@ -28,9 +28,8 @@
                 <div class="controls-section">
                     <h3>Quick Filters</h3>
                     <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">All</button>
                         <button class="filter-btn" data-filter="today">Today</button>
-                        <button class="filter-btn" data-filter="week">Last 7 Days</button>
+                        <button class="filter-btn active" data-filter="week">Last 7 Days</button>
                         <button class="filter-btn" data-filter="month">Last 30 Days</button>
                         <button class="filter-btn" data-filter="favorites">⭐ Favorites</button>
                     </div>

@@ -11,7 +11,7 @@ let currentState = {
     selectedDate: null,
     allDates: [],
     allImages: [],
-    currentFilter: 'all', // 'all', 'today', 'week', 'month', 'favorites'
+    currentFilter: 'week', // 'today', 'week', 'month', 'favorites'
     authenticated: false,
     showArchived: false,
     showArchiveFolder: false,
@@ -221,9 +221,9 @@ function createCalendarDay(day, month, year, data, isOtherMonth) {
 
 function selectDate(date) {
     currentState.selectedDate = date;
-    currentState.currentFilter = 'all'; // Reset filter when selecting date
+    currentState.currentFilter = 'week'; // Reset filter when selecting date
     document.querySelectorAll('.filter-btn').forEach(b => {
-        if (b.dataset.filter === 'all') b.classList.add('active');
+        if (b.dataset.filter === 'week') b.classList.add('active');
         else b.classList.remove('active');
     });
     document.querySelectorAll('.calendar-day.selected').forEach(d => d.classList.remove('selected'));
@@ -261,8 +261,9 @@ function loadGalleryDates() {
 
 function loadAllDateGroups() {
     const isFavorites = currentState.currentFilter === 'favorites';
-    // Default view shows the last 30 days; favorites show everything
-    const days = isFavorites ? 0 : 30;
+    // Ask the server only for the days the active filter shows; favorites show everything
+    const daysForFilter = { today: 1, week: 7, month: 30, favorites: 0 };
+    const days = daysForFilter[currentState.currentFilter] ?? 7;
 
     fetch(`api.php?action=get_all_images&view=${isFavorites ? 'favorites' : 'all'}&days=${days}`)
         .then(response => response.json())
