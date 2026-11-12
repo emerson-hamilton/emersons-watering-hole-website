@@ -1,0 +1,15 @@
+# Exclude configuration with secrets
+config.php
+
+# Exclude runtime files
+error_log
+.htaccess
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Exclude uploaded/cached images
+/uploads/
+/uploads_archive/
+/thumbnails/
