@@ -75,10 +75,17 @@ rsync -a --remove-source-files -e "ssh -i <key>" /mnt/usbdrive/img/ user@host:
 
 ### Database
 
-Two tables are used, and key columns are listed below. The full schema isn't in the repo yet.
+MariaDB 10.6. The full structure is in `docs/schema.sql` (tables and indexes only).
 
-- **`cam_images`**: one row per photo. The key columns are `id`, `filename` (unique), `folder_date`, `captured_date`, `upload_date`, `label`, `is_favorite`, `is_archived`, and `display_order`.
-- **`admin_settings`**: key-value pairs. The admin password hash is stored here under `setting_key = 'password_hash'`.
+- **`cam_images`**: one row per photo.
+  - `filename` is unique, so the same file can't be registered twice.
+  - `folder_date` (DATE) is the date folder the file is stored in.
+  - `captured_date` (DATETIME) is read from the filename.
+  - `upload_date` is when the sync registered the photo.
+  - `label`, `is_favorite`, and `is_archived` are set by the admin.
+  - `display_order` is written as 0 by the sync and not read anywhere else.
+  - `created_at` and `updated_at` are set automatically.
+- **`admin_settings`**: key-value pairs with a unique `setting_key`. The admin password hash is stored here under `setting_key = 'password_hash'`.
 
 ### Sync
 
@@ -107,6 +114,17 @@ Admin pages require a login. The session expires after one hour of inactivity. A
 ### Cache busting
 
 `index.php` and `admin.php` load `js/app.js?v=<modification time>`, so browsers fetch the new file after each update.
+
+## Environment
+
+| Component | Version |
+|---|---|
+| Web server PHP (cPanel, used by the website) | 8.4.27 |
+| Command-line PHP (used by cron) | 8.2.35 |
+| MariaDB | 10.6.28 |
+| phpMyAdmin | 5.2.3 |
+
+Both PHP versions include the `gd` and `pdo_mysql` modules the sync needs.
 
 ## Operations
 
@@ -232,6 +250,5 @@ Each entry says what was decided, why, and what it costs.
 
 ## Open items
 
-- The full database schema should be exported and added to `docs/`.
 - The hashing cost factor for the admin password should be recorded.
 - A way to report sync health to the admin page would avoid checking the log by hand.
